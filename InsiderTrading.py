@@ -4,10 +4,11 @@ import pandas as pd
 import numpy as np
 from IPython.display import clear_output
 from tqdm import tqdm
+import datetime as dt
 
 #Looks up Edgar CIK Number
 def symbol_to_cik(symbols):
-    ticker_cik = pd.read_csv(r'Save and insert path to ticker_cik_edgar_cik.csv', delimiter=',')
+    ticker_cik = pd.read_csv(r'ticker_and_edgar_cik.csv', delimiter=',')
     df = pd.DataFrame(ticker_cik)
     df.set_index('Ticker', inplace=True)
     new_symbols = [i.lower() for i in symbols]
@@ -15,7 +16,7 @@ def symbol_to_cik(symbols):
     return cik
 #Looks up Symbol from CIK Number:
 def cik_to_symbol(ciks):
-    ticker_cik = pd.read_csv(r'Save and insert path to ticker_cik_edgar_cik.csv', delimiter=',')
+    ticker_cik = pd.read_csv(r'ticker_and_edgar_cik.csv', delimiter=',')
     df = pd.DataFrame(ticker_cik)
     df.set_index('CIK', inplace=True)
     df = df[~df.index.duplicated(keep='first')]
@@ -30,11 +31,12 @@ def to_soup(url):
     return soup
 
 #Pulls the Insider Trading Statistics
-def insider_trading():
-    ticker_csv = pd.read_csv(r'Save and insert path to ticker_cik_edgar_cik.csv', delimiter=',')
-    symbols = [i.upper() for i in ticker_csv.Ticker]
+def insider_trading(symbols, end = '2020-01-01', ):
+    # Quitar symbols de los parentesis para hacer batch request
     
-    end = '2020-01-01'
+    #ticker_csv = pd.read_csv(r'ticker_and_edgar_cik.csv', delimiter=',')
+    #symbols = [i.upper() for i in ticker_csv.Ticker]
+    
     dfs = []
     with tqdm(total = len(symbols)) as pbar:
         for i in range(len(symbols)):
@@ -81,6 +83,7 @@ def insider_trading():
                 avg_purch = int(total_purch/num_purch)
                 avg_sale = int(total_sale/num_sale)
                 ratio = round(num_purch/num_sale, 2)
+                created_at = dt.datetime.now().date().isoformat()
                 new_df = pd.DataFrame({'Symbol': lst[0],
                                        'Purchases': num_purch,
                                        'Sales': num_sale,
@@ -88,7 +91,8 @@ def insider_trading():
                                        'Total Bought': f'{total_purch:,}',
                                        'Total Sold': f'{total_sale:,}',
                                        'Avg Shares Bought': f'{avg_purch:,}',
-                                       'Avg Shares Sold': f'{avg_sale:,}'},
+                                       'Avg Shares Sold': f'{avg_sale:,}',
+                                       'Date': created_at},
                                         index = [0])
 
                 new_df.set_index('Symbol', inplace=True)
@@ -105,4 +109,5 @@ def insider_trading():
     
     #combo.to_excel('Insert path where you want to save the .xlsx file', index = True)
     
-    return combo.sort_values('Buy/Sell Ratio',ascending = False).head(100)
+    #return combo.sort_values('Buy/Sell Ratio',ascending = False).head(100)
+    return combo
